@@ -28,7 +28,7 @@ var STLGeometry = function(stl_string) {
 
   // console.log("Starting to compute normals")
 
-	this.computeNormals();
+  // this.computeNormals();
 	
   // console.log("Finished STLGeometry")
 }
@@ -61,37 +61,48 @@ function parse_stl(stl_data) {
   var faces     = [];
   
   var face_vertexes = [];
-  
+
+  // console.log(stl_data);
+
+  // strip out extraneous stuff
   stl_data = stl_data.replace(/\n/g, " ");
+  stl_data = stl_data.replace(/solid\s(\w+)?/, "");
+  stl_data = stl_data.replace(/facet normal /g,"");
+  stl_data = stl_data.replace(/outer loop/g,"");  
+  stl_data = stl_data.replace(/vertex /g,"");
+  stl_data = stl_data.replace(/endloop/g,"");
+  stl_data = stl_data.replace(/endfacet/g,"");
+  stl_data = stl_data.replace(/endsolid\s(\w+)?/, "");
   stl_data = stl_data.replace(/\s+/g, " ");
+  stl_data = stl_data.replace(/^\s+/, "");
 
-  facet_blocks = stl_data.match(/facet normal.*?endfacet/g);
-  // console.log("found " + facet_blocks.length + " blocks");
-  for (var i=0; i<facet_blocks.length; i++) {
-    facet_block = facet_blocks[i];
-    // console.log(i + " BLOCK: " + facet_block + "\n");
+  // console.log(stl_data);
 
-    // FIXME: some STL files have extended notation like 1.12312e-12, should probably just split on spaces instead of regex...
-    normal_blocks = /normal ([-+]?[0-9]*\.?[0-9]+) ([-+]?[0-9]*\.?[0-9]+) ([-+]?[0-9]*\.?[0-9]+) outer/.exec(facet_block);
-    normal_points = [parseFloat(normal_blocks[1]), parseFloat(normal_blocks[2]), parseFloat(normal_blocks[3])];
-    normals.push(normal_points);
+  var facet_count = 0;
+  var block_start = 0;
 
-    vertex_parts = facet_block.match(/vertex ([-+]?[0-9]*\.?[0-9]+) ([-+]?[0-9]*\.?[0-9]+) ([-+]?[0-9]*\.?[0-9]+) /g);
-    for (var vpi=0; vpi<vertex_parts.length; vpi++) {      
-      vertex_part = vertex_parts[vpi];
-      // console.log("vertex_part = " + vertex_part);
-      vertex_blocks = /vertex ([-+]?[0-9]*\.?[0-9]+) ([-+]?[0-9]*\.?[0-9]+) ([-+]?[0-9]*\.?[0-9]+)/.exec(vertex_part);
-      vertex_points = [parseFloat(vertex_blocks[1]), parseFloat(vertex_blocks[2]), parseFloat(vertex_blocks[3])];
-      
-      if (vertexes.myIndexOf(vertex_points) == -1) {
-        vertexes.push(vertex_points);
+  var points = stl_data.split(" ");
+
+  for (var i=0; i<points.length/12-1; i++) {
+    normal = [parseFloat(points[block_start]), parseFloat(points[block_start+1]), parseFloat(points[block_start+2])]
+    normals.push(normal)
+    // console.log(normal)
+    
+    for (var x=0; x<3; x++) {
+      vertex = [parseFloat(points[block_start+x*3+3]), parseFloat(points[block_start+x*3+4]), parseFloat(points[block_start+x*3+5])];
+
+      if (vertexes.myIndexOf(vertex) == -1) {
+        vertexes.push(vertex);
+        // console.log(vertex);
       }
 
       if (face_vertexes[i] == undefined) {
         face_vertexes[i] = [];
       }
-      face_vertexes[i].push(vertex_points);
+      face_vertexes[i].push(vertex);
     }
+    
+    block_start = block_start + 12;
   }
 
   // console.log("calculating faces")
@@ -113,15 +124,15 @@ function parse_stl(stl_data) {
   }
   
   // for (var i=0; i<normals.length; i++) {
-    // console.log('passing normal: ' + normals[i][0] + ", " + normals[i][1] + ", " + normals[i][2]);
+  //   console.log('passing normal: ' + normals[i][0] + ", " + normals[i][1] + ", " + normals[i][2]);
   // }
-  
+  // 
   // for (var i=0; i<vertexes.length; i++) {
-    // console.log('passing vertex: ' + vertexes[i][0] + ", " + vertexes[i][1] + ", " + vertexes[i][2]);
+  //   console.log('passing vertex: ' + vertexes[i][0] + ", " + vertexes[i][1] + ", " + vertexes[i][2]);
   // }
-  
+  // 
   // for (var i=0; i<faces.length; i++) {
-    // console.log('passing face: ' + faces[i][0] + ", " + faces[i][1] + ", " + faces[i][2]);
+  //   console.log('passing face: ' + faces[i][0] + ", " + faces[i][1] + ", " + faces[i][2]);
   // }
   // 
   // console.log("end");

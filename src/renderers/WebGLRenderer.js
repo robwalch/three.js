@@ -210,29 +210,29 @@ THREE.WebGLRenderer = function () {
 
 		_program = _gl.createProgram();
 
-		_gl.attachShader( _program, getShader( "fragment", [
-								"varying vec4 vcolor;",
-
-								"void main(){",
-
-									"gl_FragColor = vcolor;",
-
-								"}"].join("") ) );
-
-		_gl.attachShader( _program, getShader( "vertex", [
-								"attribute vec3 position;",
-								"attribute vec4 color;",
-
-								"uniform mat4 viewMatrix;",
-								"uniform mat4 projectionMatrix;",
-								"varying vec4 vcolor;",
-
-								"void main(void) {",
-
-									"vcolor = color;",
-									"gl_Position = projectionMatrix * viewMatrix * vec4( position, 1 );",
-
-								"}"].join("") ) );
+    _gl.attachShader( _program, getShader( "fragment", [
+               "varying vec4 vcolor;",
+    
+               "void main(){",
+    
+                 "gl_FragColor = vcolor;",
+    
+               "}"].join("") ) );
+    
+    _gl.attachShader( _program, getShader( "vertex", [
+               "attribute vec3 position;",
+               "attribute vec4 color;",
+    
+               "uniform mat4 viewMatrix;",
+               "uniform mat4 projectionMatrix;",
+               "varying vec4 vcolor;",
+    
+               "void main(void) {",
+    
+                 "vcolor = color;",
+                 "gl_Position = projectionMatrix * viewMatrix * vec4( position, 1 );",
+    
+               "}"].join("") ) );
 
 		_gl.linkProgram( _program );
 

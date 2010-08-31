@@ -1,4 +1,4 @@
-// Test Box by Tony Buser http://cloudscad.com
+// Test Box by Tony Buser http://cloudscad.com\
 var stl_string = '\
 solid OpenSCAD_Model\
   facet normal -1.000000 0.000000 0.000000\
