@@ -185,7 +185,24 @@ THREE.Matrix4.prototype = {
 			this.n11 * this.n22 * this.n33 * this.n44 );
 
 	},
-
+	
+  transpose: function () {
+    function swap(obj, p1, p2) {
+      var aux = obj[p1];
+      obj[p1] = obj[p2];
+      obj[p2] = aux;
+    }
+    
+    swap(this, 'n21', 'n12');
+    swap(this, 'n31', 'n13');
+    swap(this, 'n32', 'n23');
+    swap(this, 'n41', 'n14');
+    swap(this, 'n42', 'n24');
+    swap(this, 'n43', 'n34');
+    return this;
+    
+  },
+  
 	clone: function () {
 
 		var m = new THREE.Matrix4();
@@ -195,6 +212,15 @@ THREE.Matrix4.prototype = {
 		m.n41 = this.n41; m.n42 = this.n42; m.n43 = this.n43; m.n44 = this.n44;
 		return m;
 
+	},
+	
+	flatten: function() {
+
+	  return [this.n11, this.n21, this.n31, this.n41,
+	      this.n12, this.n22, this.n32, this.n42,
+	      this.n13, this.n23, this.n33, this.n43,
+	      this.n14, this.n24, this.n34, this.n44];
+	 
 	},
 
 	toString: function() {
@@ -290,7 +316,7 @@ THREE.Matrix4.makeInvert = function ( m1 ) {
 	m2.n42 = m1.n12*m1.n33*m1.n41 - m1.n13*m1.n32*m1.n41 + m1.n13*m1.n31*m1.n42 - m1.n11*m1.n33*m1.n42 - m1.n12*m1.n31*m1.n43 + m1.n11*m1.n32*m1.n43;
 	m2.n43 = m1.n13*m1.n22*m1.n41 - m1.n12*m1.n23*m1.n41 - m1.n13*m1.n21*m1.n42 + m1.n11*m1.n23*m1.n42 + m1.n12*m1.n21*m1.n43 - m1.n11*m1.n22*m1.n43;
 	m2.n44 = m1.n12*m1.n23*m1.n31 - m1.n13*m1.n22*m1.n31 + m1.n13*m1.n21*m1.n32 - m1.n11*m1.n23*m1.n32 - m1.n12*m1.n21*m1.n33 + m1.n11*m1.n22*m1.n33;
-	m2.scale( 1 / m1.determinant() );
+	m2.multiplyScalar( 1 / m1.determinant() );
 
 	return m2;
 
