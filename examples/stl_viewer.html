@@ -15,12 +15,50 @@
 	</head>
 	<body>
 
-		<script type="text/javascript" src="../build/Three.js"></script>
+		<!-- <script type="text/javascript" src="../build/Three.js"></script> -->
+		
+		<script type="text/javascript" src="../src/Three.js"></script>
+		<script type="text/javascript" src="../src/core/Color.js"></script>
+		<script type="text/javascript" src="../src/core/Vector2.js"></script>
+		<script type="text/javascript" src="../src/core/Vector3.js"></script>
+		<script type="text/javascript" src="../src/core/Vector4.js"></script>
+		<script type="text/javascript" src="../src/core/Rectangle.js"></script>
+		<script type="text/javascript" src="../src/core/Matrix4.js"></script>
+		<script type="text/javascript" src="../src/core/Vertex.js"></script>
+		<script type="text/javascript" src="../src/core/Face3.js"></script>
+		<script type="text/javascript" src="../src/core/Face4.js"></script>
+		<script type="text/javascript" src="../src/core/UV.js"></script>
+		<script type="text/javascript" src="../src/core/Geometry.js"></script>
+		<script type="text/javascript" src="../src/cameras/Camera.js"></script>
+		<script type="text/javascript" src="../src/objects/Object3D.js"></script>
+		<script type="text/javascript" src="../src/objects/Mesh.js"></script>
+		<script type="text/javascript" src="../src/objects/Particle.js"></script>
+		<script type="text/javascript" src="../src/objects/Line.js"></script>
+    <script type="text/javascript" src="../src/lights/Light.js"></script>
+    <script type="text/javascript" src="../src/lights/AmbientLight.js"></script>
+    <script type="text/javascript" src="../src/lights/DirectionalLight.js"></script>
+		<script type="text/javascript" src="../src/materials/LineColorMaterial.js"></script>
+		<script type="text/javascript" src="../src/materials/MeshBitmapUVMappingMaterial.js"></script>
+		<script type="text/javascript" src="../src/materials/MeshColorFillMaterial.js"></script>
+		<script type="text/javascript" src="../src/materials/MeshColorStrokeMaterial.js"></script>
+		<script type="text/javascript" src="../src/materials/MeshFaceColorFillMaterial.js"></script>
+		<script type="text/javascript" src="../src/materials/MeshFaceColorStrokeMaterial.js"></script>
+		<script type="text/javascript" src="../src/materials/ParticleCircleMaterial.js"></script>
+		<script type="text/javascript" src="../src/materials/ParticleBitmapMaterial.js"></script>
+		<script type="text/javascript" src="../src/scenes/Scene.js"></script>
+		<script type="text/javascript" src="../src/renderers/Renderer.js"></script>
+		<script type="text/javascript" src="../src/renderers/CanvasRenderer.js"></script>
+		<script type="text/javascript" src="../src/renderers/SVGRenderer.js"></script>
+		<script type="text/javascript" src="../src/renderers/WebGLRenderer.js"></script>
+		<script type="text/javascript" src="../src/renderers/renderables/RenderableFace3.js"></script>
+		<script type="text/javascript" src="../src/renderers/renderables/RenderableFace4.js"></script>
+		<script type="text/javascript" src="../src/renderers/renderables/RenderableParticle.js"></script>
+		<script type="text/javascript" src="../src/renderers/renderables/RenderableLine.js"></script>
 
-    <script type="text/javascript" src="objects/stl_object.js"></script>
+    <script type="text/javascript" src="objects/large_stl_object.js"></script>
     <script type="text/javascript" src="../utils/stl_geometry.js"></script>
 
-		<script type="text/javascript" src="primitives/Plane.js"></script>
+		<script type="text/javascript" src="geometry/primitives/Plane.js"></script>
 
 		<script type="text/javascript" src="http://github.com/mrdoob/stats.js/raw/master/build/Stats.js"></script>
 
@@ -145,20 +183,21 @@
 
 				geometry = new STLGeometry(stl_string);
 
-				for (var i = 0; i < geometry.faces.length; i++) {
-          // geometry.faces[i].color.setRGBA( Math.random() * 0.5, Math.random() * 0.5 + 0.5, Math.random() * 0.5 + 0.5, 1 );
-          geometry.faces[i].color.setRGBA( Math.random() * 0.5, Math.random() * 0.5 + 0.5, 1, 1 );
-          // geometry.faces[i].color.setRGBA( 0, 1, 0, 0.5 );
-				}
+        // for (var i = 0; i < geometry.faces.length; i++) {
+        //           // geometry.faces[i].color.setRGBA( Math.random() * 0.5, Math.random() * 0.5 + 0.5, Math.random() * 0.5 + 0.5, 1 );
+        //           geometry.faces[i].color.setRGBA( Math.random() * 0.5, Math.random() * 0.5 + 0.5, 1, 1 );
+        //           // geometry.faces[i].color.setRGBA( 0, 1, 0, 0.5 );
+        // }
 
         // stl = new THREE.Mesh(geometry, new THREE.MeshFaceColorFillMaterial() );
-        // stl = new THREE.Mesh(geometry, new THREE.MeshColorFillMaterial( 0xe0e0e0 ) );
-        stl = new THREE.Mesh(geometry, new THREE.MeshColorStrokeMaterial( 0x000, 1, 1) );
+        stl = new THREE.Mesh(geometry, new THREE.MeshColorFillMaterial( 0x000 ) );
+        // stl = new THREE.Mesh(geometry, new THREE.MeshColorStrokeMaterial( 0x000, 1, 1) );
         // stl.position.y = 5;
         // stl.rotation.x = -90 * ( Math.PI / 180 );
         // stl.doubleSided = true;
         // stl.flipSided = true;
         // stl.overdraw = true;
+        stl.updateMatrix();
 				scene.addObject(stl);
         info.innerHTML = 'Finished Loading ' + geometry.faces.length + ' faces';
         
@@ -166,9 +205,18 @@
 
 				plane = new THREE.Mesh( new Plane( 100, 100, 10, 10 ), new THREE.MeshColorStrokeMaterial( 0xafafaf, 0.5, 1) );
         // plane.rotation.x = -90 * ( Math.PI / 180 );        
+        // plane.doubleSided = true;
+        plane.updateMatrix();
         scene.addObject(plane);
 
-				renderer = new THREE.CanvasRenderer();
+        // var ambient = new THREE.AmbientLight( new THREE.Color( 0xffffff ) );
+        //         scene.addLight(ambient);
+        var directional = new THREE.DirectionalLight( new THREE.Color( 0xffffff ), 
+           new THREE.Vector3( 10, 10, 10 ) );
+                scene.addLight(directional);
+
+        // renderer = new THREE.CanvasRenderer();
+        renderer = new THREE.WebGLRenderer();
 				renderer.setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
 
 				container.appendChild(renderer.domElement);
@@ -289,9 +337,15 @@
         } else {
           plane.rotation.z = stl.rotation.z += (targetRotation - stl.rotation.z) * 0.05;
         }
-      
+
 				renderer.render(scene, camera);
 				stats.update();
+
+
+        camera.updateMatrix();
+        stl.updateMatrix();
+        plane.updateMatrix();
+
 			}
 			
 			function camera_view(dir) {
@@ -336,9 +390,13 @@
 				scene.removeObject(stl);
         if (type == "wireframe") {
           stl = new THREE.Mesh(geometry, new THREE.MeshColorStrokeMaterial( 0x000, 1, 1) );
+          stl.updateMatrix();
   				scene.addObject(stl);
         } else {
-          stl = new THREE.Mesh(geometry, new THREE.MeshFaceColorFillMaterial() );
+          // stl = new THREE.Mesh(geometry, new THREE.MeshFaceColorFillMaterial() );
+          stl = new THREE.Mesh(geometry, new THREE.MeshColorFillMaterial( 0xaabbff ) );
+          // stl.doubleSided = true;
+          stl.updateMatrix();
   				scene.addObject(stl);
         }
       }

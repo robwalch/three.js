@@ -18,6 +18,9 @@ var STLGeometry = function(stl_string) {
     // console.log("face = " + faces[i][0] + ", " + faces[i][1] + ", " + faces[i][2]);
   }
 
+  // console.log("Starting to compute normals")
+  this.computeNormals();
+
   function v(x, y, z) {
     scope.vertices.push( new THREE.Vertex( new THREE.Vector3( x, y, z ) ) );
   }
@@ -26,10 +29,6 @@ var STLGeometry = function(stl_string) {
     scope.faces.push( new THREE.Face3( a, b, c ) );
   }
 
-  // console.log("Starting to compute normals")
-
-  // this.computeNormals();
-	
   // console.log("Finished STLGeometry")
 }
 
