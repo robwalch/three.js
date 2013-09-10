@@ -1,142 +1,149 @@
-var STLGeometry = function(stl_string) {
-	THREE.Geometry.call(this);
+(function(THREE) {
+	'use strict';
 
-	var scope = this;
+	var STLGeometry = THREE.STLGeometry = function(stl) {
+		THREE.Geometry.call(this);
 
-  var stl_info  = parse_stl(stl_string);
-  var vertexes  = stl_info[0];
-  var normals   = stl_info[1];
-  var faces     = stl_info[2];
-
-  for (var i=0; i<vertexes.length; i++) {
-    v(vertexes[i][0], vertexes[i][1], vertexes[i][2]);
-    // console.log("vertex = " + vertexes[i][0] + ", " + vertexes[i][1] + ", " + vertexes[i][2]);
-  }
-
-  for (var i=0; i<faces.length; i++) {
-    f3(faces[i][0], faces[i][1], faces[i][2]);
-    // console.log("face = " + faces[i][0] + ", " + faces[i][1] + ", " + faces[i][2]);
-  }
-
-  // console.log("Starting to compute normals")
-  this.computeNormals();
-
-  function v(x, y, z) {
-    scope.vertices.push( new THREE.Vertex( new THREE.Vector3( x, y, z ) ) );
-  }
-
-  function f3(a, b, c) {
-    scope.faces.push( new THREE.Face3( a, b, c ) );
-  }
-
-  // console.log("Finished STLGeometry")
-}
-
-STLGeometry.prototype = new THREE.Geometry();
-STLGeometry.prototype.constructor = STLGeometry;
-
-// indexOf only finds strings? seriously Javascript, seriously?!
-Array.prototype.myIndexOf = function(searchstring, indexstart) {
-  if (indexstart == undefined) {
-    indexstart = 0;
-  }
-  
-	var result = -1;
-	for (i=indexstart; i<this.length; i++) {
-		if (this[i] == searchstring) {
-			result = i;
-			break;
+		var stlParsed;
+		if (stl instanceof window.ArrayBuffer) {
+			stlParsed = parseBinary(stl);
+		} else {
+			stlParsed = parseString(stl);
 		}
+
+		var vertices  = stlParsed[0];
+		var faces     = stlParsed[1];
+
+		var i;
+		for (i=0; i<vertices.length; i++) {
+			this.vertices.push( vertices[i] );
+		}
+
+		for (i=0; i<faces.length; i++) {
+			this.faces.push( faces[i] );
+		}
+
+		//console.log('STLGeometry vertices:', vertices.length, 'faces:', faces.length);
+	};
+
+	STLGeometry.prototype = new THREE.Geometry();
+	STLGeometry.prototype.constructor = STLGeometry;
+
+	Array.prototype.indexOfVector3 = function(vector, indexstart) {
+		for (var i=indexstart||0, len=this.length; i<len; i++) {
+			if (this[i].x === vector.x && this[i].y === vector.y && this[i].z === vector.z) {
+				return i;
+			}
+		}
+		return -1;
+	};
+
+	function parseString(stlData) {
+		// build stl's vertex and face arrays
+
+		var vertexes  = [];
+		var faces     = [];
+
+		// console.log(stlData);
+
+		// strip out extraneous stuff
+		stlData = stlData.replace(/\n/g, ' ');
+		stlData = stlData.replace(/solid\s(\w+)?/, '');
+		stlData = stlData.replace(/facet normal /g,'');
+		stlData = stlData.replace(/outer loop/g,'');
+		stlData = stlData.replace(/vertex /g,'');
+		stlData = stlData.replace(/endloop/g,'');
+		stlData = stlData.replace(/endfacet/g,'');
+		stlData = stlData.replace(/endsolid\s(\w+)?/, '');
+		stlData = stlData.replace(/\s+/g, ' ');
+		stlData = stlData.replace(/^\s+/, '');
+
+		// console.log(stlData);
+
+		var blockStart = 0;
+		var points = stlData.split(' ');
+		var i;
+
+		for (i=0; i<points.length/12-1; i++) {
+			var normal = new THREE.Vector3(
+				parseFloat(points[blockStart]),
+				parseFloat(points[blockStart+1]),
+				parseFloat(points[blockStart+2])
+			);
+			// console.log(normal);
+			var faceVertexes = [];
+			var vectorIndex;
+			for (var x=0; x<3; x++) {
+				var vertex = new THREE.Vector3(
+					parseFloat(points[blockStart+x*3+3]),
+					parseFloat(points[blockStart+x*3+4]),
+					parseFloat(points[blockStart+x*3+5])
+				);
+				// vectorIndex = vertexes.indexOfVector3(vertex);
+				// if (vectorIndex === -1) {
+				vectorIndex = vertexes.length;
+				vertexes.push(vertex);
+				// }
+				faceVertexes[x] = vectorIndex;
+			}
+
+			var face = new THREE.Face3(
+				faceVertexes[0],
+				faceVertexes[1],
+				faceVertexes[2],
+				normal
+			);
+			faces.push(face);
+
+			blockStart = blockStart + 12;
+		}
+
+		return [vertexes, faces];
 	}
-	return result;
-};
 
-// FIXME: optimization me please!
-function parse_stl(stl_data) {
-  // build stl's vertex and face arrays
-  
-  var vertexes  = [];
-  var normals   = [];
-  var faces     = [];
-  
-  var face_vertexes = [];
+	function parseBinary(stlData) {
+		var vertexes  = [];
+		var faces     = [];
 
-  // console.log(stl_data);
+		// The stl binary is read into a DataView for processing
+	    var dv = new DataView(stlData, 80); // 80 == unused header
+	    var isLittleEndian = true;
 
-  // strip out extraneous stuff
-  stl_data = stl_data.replace(/\n/g, " ");
-  stl_data = stl_data.replace(/solid\s(\w+)?/, "");
-  stl_data = stl_data.replace(/facet normal /g,"");
-  stl_data = stl_data.replace(/outer loop/g,"");  
-  stl_data = stl_data.replace(/vertex /g,"");
-  stl_data = stl_data.replace(/endloop/g,"");
-  stl_data = stl_data.replace(/endfacet/g,"");
-  stl_data = stl_data.replace(/endsolid\s(\w+)?/, "");
-  stl_data = stl_data.replace(/\s+/g, " ");
-  stl_data = stl_data.replace(/^\s+/, "");
+	    // Read a 32 bit unsigned integer
+	    var triangles = dv.getUint32(0, isLittleEndian);
 
-  // console.log(stl_data);
+	    var offset = 4;
+	    for (var i = 0; i < triangles; i++) {
+	        // Get the normal for this triangle by reading 3 32 but floats
+	        var normal = new THREE.Vector3(
+	            dv.getFloat32(offset, isLittleEndian),
+	            dv.getFloat32(offset+4, isLittleEndian),
+	            dv.getFloat32(offset+8, isLittleEndian)
+	        );
+	        offset += 12;
 
-  var facet_count = 0;
-  var block_start = 0;
+	        // Get all 3 vertices for this triangle, each represented
+	        // by 3 32 bit floats.
+	        for (var j = 0; j < 3; j++) {
+	            vertexes.push(
+	                new THREE.Vector3(
+	                    dv.getFloat32(offset, isLittleEndian),
+	                    dv.getFloat32(offset+4, isLittleEndian),
+	                    dv.getFloat32(offset+8, isLittleEndian)
+	                )
+	            );
+	            offset += 12;
+	        }
 
-  var points = stl_data.split(" ");
+	        // there's also a Uint16 "attribute byte count" that we
+	        // don't need, it should always be zero.
+	        offset += 2;
 
-  for (var i=0; i<points.length/12-1; i++) {
-    normal = [parseFloat(points[block_start]), parseFloat(points[block_start+1]), parseFloat(points[block_start+2])]
-    normals.push(normal)
-    // console.log(normal)
-    
-    for (var x=0; x<3; x++) {
-      vertex = [parseFloat(points[block_start+x*3+3]), parseFloat(points[block_start+x*3+4]), parseFloat(points[block_start+x*3+5])];
+	        // Create a new face for from the vertices and the normal             
+	        faces.push(new THREE.Face3(i*3, i*3+1, i*3+2, normal));
+	    }
 
-      if (vertexes.myIndexOf(vertex) == -1) {
-        vertexes.push(vertex);
-        // console.log(vertex);
-      }
+	    return [vertexes, faces];
+	}
 
-      if (face_vertexes[i] == undefined) {
-        face_vertexes[i] = [];
-      }
-      face_vertexes[i].push(vertex);
-    }
-    
-    block_start = block_start + 12;
-  }
-
-  // console.log("calculating faces")
-  for (var i=0; i<face_vertexes.length; i++) {
-    // console.log("face vertex " + i + " = " + face_vertexes[i]);
-    
-    if (faces[i] == undefined) {
-      faces[i] = [];
-    }
-  
-    for (var fvi=0; fvi<face_vertexes[i].length; fvi++) {
-      // console.log(i + " looking for " + face_vertexes[i][fvi])
-      faces[i].push(vertexes.myIndexOf(face_vertexes[i][fvi]))
-      // console.log("found " + vertexes.indexOf(face_vertexes[i][fvi]))
-    }
-  
-    // for material
-    faces[i].push(0);
-  }
-  
-  // for (var i=0; i<normals.length; i++) {
-  //   console.log('passing normal: ' + normals[i][0] + ", " + normals[i][1] + ", " + normals[i][2]);
-  // }
-  // 
-  // for (var i=0; i<vertexes.length; i++) {
-  //   console.log('passing vertex: ' + vertexes[i][0] + ", " + vertexes[i][1] + ", " + vertexes[i][2]);
-  // }
-  // 
-  // for (var i=0; i<faces.length; i++) {
-  //   console.log('passing face: ' + faces[i][0] + ", " + faces[i][1] + ", " + faces[i][2]);
-  // }
-  // 
-  // console.log("end");
-  // document.getElementById('debug').innerHTML = stl_data;
-  
-  // console.log("finished parsing stl")
-  return [vertexes, normals, faces];
-}
+})(window.THREE);
